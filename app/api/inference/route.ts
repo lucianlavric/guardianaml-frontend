@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-static';
+
 const TRITON_URL = process.env.TRITON_URL || 'http://localhost:8000';
 const MODEL_NAME = process.env.MODEL_NAME || 'your_model_name';
 
