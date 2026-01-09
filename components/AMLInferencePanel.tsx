@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
-import { AlertCircle, CheckCircle, Loader2, Upload, DollarSign } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Upload,
+  DollarSign,
+} from "lucide-react";
 
 export default function AMLInferencePanel() {
   const [csvFile, setCsvFile] = useState(null);
@@ -12,11 +18,11 @@ export default function AMLInferencePanel() {
   // Check Triton health
   const checkHealth = async () => {
     try {
-      const res = await fetch('/api/inference');
+      const res = await fetch("/api/inference");
       const data = await res.json();
       setHealth(data);
     } catch (err) {
-      setHealth({ status: 'error', message: err.message });
+      setHealth({ status: "error", message: err.message });
     }
   };
 
@@ -24,29 +30,29 @@ export default function AMLInferencePanel() {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     setCsvFile(file);
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const text = event.target.result;
-        const rows = text.trim().split('\n');
-        const headers = rows[0].split(',').map(h => h.trim());
-        
+        const rows = text.trim().split("\n");
+        const headers = rows[0].split(",").map((h) => h.trim());
+
         // Parse CSV rows (skip header)
-        const transactions = rows.slice(1).map(row => {
-          const values = row.split(',');
+        const transactions = rows.slice(1).map((row) => {
+          const values = row.split(",");
           const txn = {};
           headers.forEach((header, i) => {
             txn[header] = values[i]?.trim();
           });
           return txn;
         });
-        
+
         setCsvData(transactions);
         setError(null);
       } catch (err) {
-        setError('Failed to parse CSV: ' + err.message);
+        setError("Failed to parse CSV: " + err.message);
       }
     };
     reader.readAsText(file);
@@ -55,10 +61,10 @@ export default function AMLInferencePanel() {
   // Run inference on CSV transactions
   const runBatchInference = async () => {
     if (!csvData || csvData.length === 0) {
-      setError('Please upload a CSV file first');
+      setError("Please upload a CSV file first");
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     setResult(null);
@@ -66,60 +72,93 @@ export default function AMLInferencePanel() {
     try {
       // Format transactions for model (28 features each)
       // NOTE: This is simplified - you need proper feature engineering!
-      const formattedData = csvData.slice(0, 100).map(txn => {
+      const formattedData = csvData.slice(0, 100).map((txn) => {
         // Extract basic features from CSV
-        const amountReceived = parseFloat(txn['Amount Received']) || 0;
-        const amountPaid = parseFloat(txn['Amount Paid']) || 0;
+        const amountReceived = parseFloat(txn["Amount Received"]) || 0;
+        const amountPaid = parseFloat(txn["Amount Paid"]) || 0;
         const fxSpread = amountPaid - amountReceived;
-        const isCrossCurrency = (txn['Receiving Currency'] !== txn['Payment Currency']) ? 1 : 0;
-        const sameBank = (txn['From Bank'] === txn['To Bank']) ? 1 : 0;
-        const selfTransfer = (txn['Account'] === txn['To Account']) ? 1 : 0;
-        
+        const isCrossCurrency =
+          txn["Receiving Currency"] !== txn["Payment Currency"] ? 1 : 0;
+        const sameBank = txn["From Bank"] === txn["To Bank"] ? 1 : 0;
+        const selfTransfer = txn["Account"] === txn["To Account"] ? 1 : 0;
+
         // Time features (simplified)
-        const timestamp = new Date(txn['Timestamp']);
+        const timestamp = new Date(txn["Timestamp"]);
         const hour = timestamp.getHours();
         const dow = timestamp.getDay();
-        const isWeekend = (dow === 0 || dow === 6) ? 1 : 0;
-        
+        const isWeekend = dow === 0 || dow === 6 ? 1 : 0;
+
         // Aggregate features (would need actual computation from training data)
         // For demo, use zeros - in production, compute these from historical data!
-        const accTxCount = 0, accAmtPaidMean = 0, accAmtRecvMean = 0, accCrossCcyRate = 0;
-        const toaccTxCount = 0, toaccAmtPaidMean = 0, toaccAmtRecvMean = 0, toaccCrossCcyRate = 0;
-        const fbTxCount = 0, fbAmtPaidMean = 0, fbAmtRecvMean = 0, fbCrossCcyRate = 0;
-        const tbTxCount = 0, tbAmtPaidMean = 0, tbAmtRecvMean = 0, tbCrossCcyRate = 0;
-        
+        const accTxCount = 0,
+          accAmtPaidMean = 0,
+          accAmtRecvMean = 0,
+          accCrossCcyRate = 0;
+        const toaccTxCount = 0,
+          toaccAmtPaidMean = 0,
+          toaccAmtRecvMean = 0,
+          toaccCrossCcyRate = 0;
+        const fbTxCount = 0,
+          fbAmtPaidMean = 0,
+          fbAmtRecvMean = 0,
+          fbCrossCcyRate = 0;
+        const tbTxCount = 0,
+          tbAmtPaidMean = 0,
+          tbAmtRecvMean = 0,
+          tbCrossCcyRate = 0;
+
         // Return 28 features in correct order
         return [
-          amountReceived, amountPaid, fxSpread,
-          isCrossCurrency, sameBank, selfTransfer,
-          hour, dow, isWeekend,
-          accTxCount, accAmtPaidMean, accAmtRecvMean, accCrossCcyRate,
-          toaccTxCount, toaccAmtPaidMean, toaccAmtRecvMean, toaccCrossCcyRate,
-          fbTxCount, fbAmtPaidMean, fbAmtRecvMean, fbCrossCcyRate,
-          tbTxCount, tbAmtPaidMean, tbAmtRecvMean, tbCrossCcyRate,
+          amountReceived,
+          amountPaid,
+          fxSpread,
+          isCrossCurrency,
+          sameBank,
+          selfTransfer,
+          hour,
+          dow,
+          isWeekend,
+          accTxCount,
+          accAmtPaidMean,
+          accAmtRecvMean,
+          accCrossCcyRate,
+          toaccTxCount,
+          toaccAmtPaidMean,
+          toaccAmtRecvMean,
+          toaccCrossCcyRate,
+          fbTxCount,
+          fbAmtPaidMean,
+          fbAmtRecvMean,
+          fbCrossCcyRate,
+          tbTxCount,
+          tbAmtPaidMean,
+          tbAmtRecvMean,
+          tbCrossCcyRate,
           // Categorical features would be one-hot encoded
-          0, 0, 0  // Placeholder for encoded categories
+          0,
+          0,
+          0, // Placeholder for encoded categories
         ];
       });
 
-      const response = await fetch('/api/inference', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/inference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           inputs: [
             {
-              name: 'input__0',
+              name: "input__0",
               shape: [formattedData.length, 28],
-              datatype: 'FP32',
-              data: formattedData.flat()
-            }
-          ]
-        })
+              datatype: "FP32",
+              data: formattedData.flat(),
+            },
+          ],
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Batch inference failed');
+        throw new Error(errorData.error || "Batch inference failed");
       }
 
       const data = await response.json();
@@ -152,15 +191,19 @@ export default function AMLInferencePanel() {
           {/* Health Status */}
           <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
             <div className="flex items-center justify-between">
-              <span className="text-white font-medium">Inference Server Status:</span>
+              <span className="text-white font-medium">
+                Inference Server Status:
+              </span>
               {health ? (
                 <div className="flex items-center gap-2">
-                  {health.status === 'ready' ? (
+                  {health.status === "ready" ? (
                     <CheckCircle className="w-5 h-5 text-green-400" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-red-400" />
                   )}
-                  <span className={`text-sm ${health.status === 'ready' ? 'text-green-400' : 'text-red-400'}`}>
+                  <span
+                    className={`text-sm ${health.status === "ready" ? "text-green-400" : "text-red-400"}`}
+                  >
                     {health.status}
                   </span>
                 </div>
@@ -172,9 +215,11 @@ export default function AMLInferencePanel() {
 
           {/* Expected CSV Format Info */}
           <div className="mb-6 p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg">
-            <h3 className="text-white font-semibold mb-2">Expected CSV Format (IBM Synthetic Data)</h3>
+            <h3 className="text-white font-semibold mb-2">
+              Expected CSV Format (IBM Synthetic Data)
+            </h3>
             <pre className="text-blue-200 text-xs overflow-x-auto">
-{`Timestamp,From Bank,Account,To Bank,To Account,Amount Received,
+              {`Timestamp,From Bank,Account,To Bank,To Account,Amount Received,
 Receiving Currency,Amount Paid,Payment Currency,Payment Format,Is Laundering
 
 2019/01/01 00:22,800319940,8004ED620,808519790,872ABC810,120.92,
@@ -186,7 +231,9 @@ US Dollar,120.92,US Dollar,Credit Card,0`}
           <div className="mb-6 p-6 bg-white/5 rounded-lg border-2 border-dashed border-white/20">
             <label className="flex flex-col items-center cursor-pointer">
               <Upload className="w-12 h-12 text-blue-400 mb-3" />
-              <span className="text-white font-medium mb-2">Upload Transaction CSV</span>
+              <span className="text-white font-medium mb-2">
+                Upload Transaction CSV
+              </span>
               {csvData ? (
                 <div className="text-green-400 text-sm mb-2">
                   ✓ {csvData.length} transactions loaded from {csvFile?.name}
@@ -202,7 +249,9 @@ US Dollar,120.92,US Dollar,Credit Card,0`}
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <span className="text-xs text-blue-400 mt-2">Click to browse</span>
+              <span className="text-xs text-blue-400 mt-2">
+                Click to browse
+              </span>
             </label>
           </div>
 
@@ -211,12 +260,20 @@ US Dollar,120.92,US Dollar,Credit Card,0`}
             <div className="flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-yellow-400 font-medium">Important Note</div>
+                <div className="text-yellow-400 font-medium">
+                  Important Note
+                </div>
                 <div className="text-yellow-300 text-sm mt-1">
-                  This demo uses simplified feature engineering. Production deployment requires:
+                  This demo uses simplified feature engineering. Production
+                  deployment requires:
                   <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Historical aggregate features (tx counts, means, rates per entity)</li>
-                    <li>Proper categorical encoding (Payment Format, Currencies)</li>
+                    <li>
+                      Historical aggregate features (tx counts, means, rates per
+                      entity)
+                    </li>
+                    <li>
+                      Proper categorical encoding (Payment Format, Currencies)
+                    </li>
                     <li>Complete 28-feature vector matching training data</li>
                   </ul>
                 </div>
@@ -262,21 +319,24 @@ US Dollar,120.92,US Dollar,Credit Card,0`}
           {result && (
             <div className="mt-6 p-6 bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-green-500/50 rounded-lg">
               <div className="flex items-center justify-between mb-4">
-                <div className="text-green-400 font-bold text-lg">Batch Analysis Complete</div>
+                <div className="text-green-400 font-bold text-lg">
+                  Batch Analysis Complete
+                </div>
                 <CheckCircle className="w-6 h-6 text-green-400" />
               </div>
-              
+
               {result.prediction && (
                 <div className="mb-4">
                   <div className="text-white text-xl font-bold mb-2">
-                    Suspicious Transactions Found: {result.prediction.filter(p => p === 1).length}
+                    Suspicious Transactions Found:{" "}
+                    {result.prediction.filter((p) => p === 1).length}
                   </div>
                   <div className="text-blue-300 text-sm">
                     Total Analyzed: {result.prediction.length}
                   </div>
                 </div>
               )}
-              
+
               <details className="mt-4">
                 <summary className="text-blue-300 text-sm cursor-pointer hover:text-blue-200">
                   View Raw Model Output
@@ -292,3 +352,4 @@ US Dollar,120.92,US Dollar,Credit Card,0`}
     </div>
   );
 }
+
