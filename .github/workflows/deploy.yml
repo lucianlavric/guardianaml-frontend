@@ -31,6 +31,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "out/*,out/.*"
-          target: "~/frontend-build/"
+          target: "~/Guardian/frontend/"
           strip_components: 1
           rm: true
