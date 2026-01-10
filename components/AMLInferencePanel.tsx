@@ -420,7 +420,7 @@ export default function AMLDashboard() {
                     type="text"
                     value={targetBank}
                     onChange={(e) => setTargetBank(e.target.value)}
-                    placeholder="e.g., BANKABC01"
+                    placeholder="e.g, BANKABC01"
                     maxLength={9}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                     onKeyPress={(e) => e.key === 'Enter' && fetchRiskyAccounts()}
