@@ -103,10 +103,14 @@ export default function AMLDashboard() {
   const [targetAccount, setTargetAccount] = useState('');
   const [transactions, setTransactions] = useState<InferenceResult[]>([]);
   const [riskyAccounts, setRiskyAccounts] = useState<RiskyAccount[]>([]);
+  const [batchResults, setBatchResults] = useState<InferenceResult[]>([]);
+  const [batchNumFlagged, setBatchNumFlagged] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [threshold, setThreshold] = useState(0.5);
   const [account_amount, setAccount_Amount] = useState(5);
+  const [numInferences, setNumInferences] = useState(10);
+  const [onlyPositive, setOnlyPositive] = useState(false);
   const [showBankReference, setShowBankReference] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -179,6 +183,37 @@ export default function AMLDashboard() {
     }
   };
 
+  const fetchBatchRandom = async () => {
+    if (numInferences < 1) {
+      setError('Number of inferences must be at least 1');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_BASE}/inference/batch-random`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threshold,
+          num_inferences: numInferences,
+          only_positive: onlyPositive
+        })
+      });
+      if (!response.ok) throw new Error('Failed to fetch batch results');
+      const data = await response.json();
+      setBatchResults(Array.isArray(data.results) ? data.results : []);
+      setBatchNumFlagged(data.num_flagged || 0);
+    } catch (err) {
+      setError((err as Error).message || 'An error occurred');
+      setBatchResults([]);
+      setBatchNumFlagged(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -217,6 +252,17 @@ export default function AMLDashboard() {
             >
               <AlertTriangle className="w-5 h-5 inline mr-2" />
               Top Risky Accounts
+            </button>
+            <button
+              onClick={() => setActiveTab('batch')}
+              className={`px-6 py-4 font-medium transition-colors ${
+                activeTab === 'batch'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+              }`}
+            >
+              <Search className="w-5 h-5 inline mr-2" />
+              Batch Random
             </button>
           </div>
 
@@ -547,6 +593,128 @@ export default function AMLDashboard() {
               {!loading && !error && riskyAccounts.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   Click the button above to load risky accounts
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Batch Random Tab */}
+          {activeTab === 'batch' && (
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Risk Threshold
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={threshold}
+                  onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Inferences
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={numInferences}
+                    onChange={(e) => setNumInferences(parseInt(e.target.value))}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    onKeyPress={(e) => e.key === 'Enter' && fetchBatchRandom()}
+                  />
+                  <button
+                    onClick={fetchBatchRandom}
+                    disabled={loading}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
+                  >
+                    {loading ? 'Loading...' : 'Search'}
+                  </button>
+                </div>
+              </div>
+              <div className="mb-6 flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <input
+                  type="checkbox"
+                  id="onlyPositive"
+                  checked={onlyPositive}
+                  onChange={(e) => setOnlyPositive(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="onlyPositive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  Only Positive (Flagged Transactions)
+                </label>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  {error}
+                </div>
+              )}
+
+              {batchResults.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Bank Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Account Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Risk Probability
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Flagged
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Timestamp
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {batchResults.map((txn, idx) => (
+                        <tr key={idx} className={txn.prediction ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {txn.bank_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {txn.account_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {(txn.prob * 100).toFixed(2)}%
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span className={`px-3 py-1 rounded-full text-white font-medium ${
+                              txn.prediction ? 'bg-red-500' : 'bg-green-500'
+                            }`}>
+                              {txn.prediction ? 'Yes' : 'No'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(txn.timestamp * 1000).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="px-6 py-3 bg-gray-50 text-sm text-gray-600 flex justify-between">
+                    <span>Total: {batchResults.length} transactions</span>
+                    <span className="font-medium text-red-600">Flagged: {batchNumFlagged}</span>
+                  </div>
+                </div>
+              )}
+
+              {!loading && !error && batchResults.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  Click the Search button to run batch random inferences
                 </div>
               )}
             </div>
