@@ -415,38 +415,40 @@ export default function AMLDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Bank Name (9 characters)
                 </label>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={targetBank}
-                    onChange={(e) => setTargetBank(e.target.value)}
-                    placeholder="e.g, BANKABC01"
-                    maxLength={9}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                    onKeyPress={(e) => e.key === 'Enter' && fetchRiskyAccounts()}
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <input
+                  type="text"
+                  value={targetBank}
+                  onChange={(e) => setTargetBank(e.target.value)}
+                  placeholder="e.g., BANKABC01"
+                  maxLength={9}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  onKeyPress={(e) => e.key === 'Enter' && fetchRiskyAccounts()}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Examples: BANKABC01, CITYBANK1, FIRSTNB99 • Invalid: ABC (too short), TOOLONGBANK (too long)
+                </p>
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Max number of accounts
                 </label>
-                <input
-                  type="number"
-                  min="5"
-                  step="0.1"
-                  value={account_amount}
-                  onChange={(e) => setAccount_Amount(parseInt(e.target.value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                />
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={account_amount}
+                    onChange={(e) => setAccount_Amount(parseInt(e.target.value))}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  />
                   <button
                     onClick={fetchRiskyAccounts}
                     disabled={loading}
                     className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 transition-colors font-medium"
                   >
-                    {loading ? 'Loading...' : 'Load Top 5 Risky Accounts'}
+                    {loading ? 'Loading...' : 'Search'}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Examples: BANKABC01, CITYBANK1, FIRSTNB99 • Invalid: ABC (too short), TOOLONGBANK (too long)
-                </p>
               </div>
 
               {/* Bank Reference Section */}
