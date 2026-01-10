@@ -56,7 +56,8 @@ export default function AMLDashboard() {
         body: JSON.stringify({
           threshold,
           bank_name: targetBank,
-          account_name: targetAccount
+          account_name: targetAccount,
+          only_positive: false
         })
       });
       if (!response.ok) throw new Error('Failed to fetch transactions');
@@ -85,7 +86,8 @@ export default function AMLDashboard() {
         body: JSON.stringify({
           threshold,
           bank_name: targetBank,
-          top_n: 5
+          top_n: 5,
+          only_positive: false
         })
       });
       if (!response.ok) throw new Error('Failed to fetch risky accounts');
