@@ -106,6 +106,7 @@ export default function AMLDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [threshold, setThreshold] = useState(0.5);
+  const [account_amount, setAccount_Amount] = useState(5);
   const [showBankReference, setShowBankReference] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -163,7 +164,7 @@ export default function AMLDashboard() {
         body: JSON.stringify({
           threshold,
           bank_name: targetBank,
-          top_n: 5,
+          top_n: account_amount,
           only_positive: false
         })
       });
@@ -424,6 +425,17 @@ export default function AMLDashboard() {
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                     onKeyPress={(e) => e.key === 'Enter' && fetchRiskyAccounts()}
                   />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max number of accounts
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  step="0.1"
+                  value={account_amount}
+                  onChange={(e) => setAccount_Amount(parseInt(e.target.value))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                />
                   <button
                     onClick={fetchRiskyAccounts}
                     disabled={loading}
