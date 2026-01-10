@@ -29,6 +29,25 @@ interface Transaction {
   date?: string;
 }
 
+const VALID_BANK_CODES = [
+  "80050F360", "800516110", "80051EDF0", "800520270", "800526450", "800526670", "80052B0F0", "800538930", "80053C4D0", "800548570",
+  "8005496A0", "800549A20", "80054B600", "80054BF00", "80054E0F0", "800557E70", "80055F640", "8005645C0", "80056DDC0", "800595080",
+  "80059A830", "8005CD2F0", "8005D0050", "8005D01D0", "8005DEFF0", "8005E6950", "8005F5420", "8005F6090", "8005F7120", "8005F8840",
+  "8005FC860", "8006080D0", "80061CE60", "800627650", "800631FA0", "800654730", "8006A1D40", "8006AB280", "8006AF230", "8006BA2C0",
+  "8006BC530", "8006C15C0", "800717F90", "80071BC20", "800729A40", "80072D850", "800736C10", "800762E00", "800765880", "800771A70",
+  "800792870", "8007985A0", "80079AF00", "80079D7F0", "8007F13C0", "8007F1540", "80080ADE0", "800830DD0", "800831E40", "8008340B0",
+  "800837760", "80084F050", "80084F2A0", "800873D60", "800884520", "800898150", "8008B3D20", "8008E6360", "8008FF2C0", "800933C00",
+  "800935510", "80093F8A0", "80094AC10", "80094ADE0", "80095F600", "8009651A0", "80097AA70", "80097C410", "80097E360", "800984EE0",
+  "8009DCB40", "8009DE6E0", "8009EF080", "8009F01C0", "8009F41F0", "8009FAA90", "8009FC590", "800A12C40", "800A21080", "800A22C40",
+  "800A33450", "800A33890", "800A3E220", "800A47130", "800A4FF50", "800A544E0", "800A67B70", "800AA9500", "800AC8A90", "800ACD7B0",
+  "800ACF610", "800AF1570", "800AFEC10", "800B37200", "800B3E8D0", "800B44D80", "800B48420", "800BC6AE0", "800BCE4E0", "800BD9040",
+  "800BDE480", "800BE8180", "800BFCCB0", "800C1DE70", "800C344A0", "800C4D2D0", "800C4E970", "800C53F20", "800C5CCD0", "800C5F950",
+  "800C6D310", "800C76660", "800C7E7D0", "800CAFF40", "800CBCF90", "800D03380", "800D06970", "800D15E20", "800D25C20", "800D2D4D0",
+  "800D2DED0", "800DA9EC0", "800DCC840", "800DE15A0", "800E0F030", "800E19680", "800E2FFD0", "800E37070", "800E87DB0", "800E92CD0",
+  "800E95EA0", "800E99FA0", "800E9D760", "800EBDE60", "800EBE120", "800EBE2F0", "800EFDCD0", "800F0F510", "800F4FB60", "800F65590",
+  "800F658F0", "800F6E840", "800F80AD0", "800FDD480", "800FDE880", "800FE6B10", "800FE8C20", "80103E030", "80103E440", "801067390",
+];
+
 export default function AMLDashboard() {
   const [activeTab, setActiveTab] = useState('target');
   const [targetBank, setTargetBank] = useState('');
@@ -38,12 +57,17 @@ export default function AMLDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [threshold, setThreshold] = useState(0.5);
+  const [showBankReference, setShowBankReference] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   const fetchTargetAccount = async () => {
     if (!targetBank.trim() || !targetAccount.trim()) {
       setError('Please enter both bank name and account number');
+      return;
+    }
+    if (targetBank.trim().length !== 9 || targetAccount.trim().length !== 9) {
+      setError('Bank name and account name must be exactly 9 characters');
       return;
     }
 
@@ -74,6 +98,10 @@ export default function AMLDashboard() {
   const fetchRiskyAccounts = async () => {
     if (!targetBank.trim()) {
       setError('Please enter a bank name');
+      return;
+    }
+    if (targetBank.trim().length !== 9) {
+      setError('Bank name must be exactly 9 characters');
       return;
     }
 
@@ -161,27 +189,32 @@ export default function AMLDashboard() {
               </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bank Name
+                  Bank Name (9 characters)
                 </label>
                 <input
                   type="text"
                   value={targetBank}
                   onChange={(e) => setTargetBank(e.target.value)}
-                  placeholder="Enter bank name..."
+                  placeholder="e.g., BANKABC01"
+                  maxLength={9}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   onKeyPress={(e) => e.key === 'Enter' && fetchTargetAccount()}
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Examples: BANKABC01, CITYBANK1, FIRSTNB99 • Invalid: ABC (too short), TOOLONGBANK (too long)
+                </p>
               </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Account Name
+                  Account Name (9 characters)
                 </label>
                 <div className="flex gap-3">
                   <input
                     type="text"
                     value={targetAccount}
                     onChange={(e) => setTargetAccount(e.target.value)}
-                    placeholder="Enter account name..."
+                    placeholder="e.g., ACC123456"
+                    maxLength={9}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     onKeyPress={(e) => e.key === 'Enter' && fetchTargetAccount()}
                   />
@@ -193,6 +226,9 @@ export default function AMLDashboard() {
                     {loading ? 'Loading...' : 'Search'}
                   </button>
                 </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Examples: ACC123456, USER98765, ACCT00001 • Invalid: 123 (too short), ACCOUNT1234 (too long)
+                </p>
               </div>
 
               {error && (
@@ -282,14 +318,15 @@ export default function AMLDashboard() {
               </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bank Name
+                  Bank Name (9 characters)
                 </label>
                 <div className="flex gap-3">
                   <input
                     type="text"
                     value={targetBank}
                     onChange={(e) => setTargetBank(e.target.value)}
-                    placeholder="Enter bank name..."
+                    placeholder="e.g., BANKABC01"
+                    maxLength={9}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     onKeyPress={(e) => e.key === 'Enter' && fetchRiskyAccounts()}
                   />
@@ -301,6 +338,9 @@ export default function AMLDashboard() {
                     {loading ? 'Loading...' : 'Load Top 5 Risky Accounts'}
                   </button>
                 </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Examples: BANKABC01, CITYBANK1, FIRSTNB99 • Invalid: ABC (too short), TOOLONGBANK (too long)
+                </p>
               </div>
 
               {error && (
