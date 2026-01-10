@@ -343,6 +343,37 @@ export default function AMLDashboard() {
                 </p>
               </div>
 
+              {/* Bank Reference Section */}
+              <div className="mb-6 border border-blue-200 rounded-lg p-4 bg-blue-50">
+                <button
+                  onClick={() => setShowBankReference(!showBankReference)}
+                  className="flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900"
+                >
+                  <span>{showBankReference ? '▼' : '▶'}</span>
+                  📋 Valid Bank Codes Reference ({VALID_BANK_CODES.length} codes available)
+                </button>
+                {showBankReference && (
+                  <div className="mt-4">
+                    <p className="text-xs text-gray-600 mb-3">
+                      Click on a bank code to copy it to the input field above:
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
+                      {VALID_BANK_CODES.map((code) => (
+                        <button
+                          key={code}
+                          onClick={() => {
+                            setTargetBank(code);
+                          }}
+                          className="px-3 py-2 bg-white border border-blue-300 rounded text-xs font-mono hover:bg-blue-100 hover:border-blue-500 transition-colors text-blue-700"
+                        >
+                          {code}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {error && (
                 <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
                   {error}
