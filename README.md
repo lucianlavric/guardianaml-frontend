@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Guardian Frontend - Nginx Hosting Setup
 
-## Getting Started
+## Overview
 
-First, run the development server:
+The Guardian frontend is a Next.js static export served by nginx on the LinuxONE server.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Server Details
+
+- **Server:** LinuxONE IBM
+- **Port:** 3000
+- **Frontend Path:** `/home/linux1/Guardian/frontend`
+- **Static Export:** `/home/linux1/Guardian/frontend/out`
+
+## Nginx Configuration
+
+The site config is located at `/etc/nginx/sites-available/guardianaml` and symlinked to `/etc/nginx/sites-enabled/`.
+
+### Config Structure
+
+```nginx
+server {
+    listen 3000;
+    server_name _;
+
+    root /home/linux1/Guardian/frontend/out;
+    index index.html;
+
+    location / {
+        try_files $uri $uri.html $uri/ /index.html;
+    }
+
+    location /_next/static/ {
+        alias /home/linux1/Guardian/frontend/out/_next/static/;
+        expires 1y;
+        access_log off;
+    }
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How It Works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **GitHub Actions** builds the Next.js app and deploys the static export to the server
+2. **nginx** serves the `/out` directory on port 3000
+3. The `try_files` directive handles client-side routing for Next.js
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Common Commands
 
-## Learn More
+```bash
+# Check nginx status
+sudo systemctl status nginx
 
-To learn more about Next.js, take a look at the following resources:
+# Test config syntax
+sudo nginx -t
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Reload after config changes
+sudo systemctl reload nginx
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# View current config
+cat /etc/nginx/sites-available/guardianaml
 
-## Deploy on Vercel
+# Check nginx error logs
+sudo tail -f /var/log/nginx/error.log
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment Flow
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+GitHub Push → Actions Build → Deploy to /home/linux1/Guardian/frontend/out → nginx serves on :3000
+```
